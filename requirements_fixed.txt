@@ -1,0 +1,7 @@
+Flask
+spacy
+jira
+atlassian-python-api
+asana
+py-trello
+slack_sdk
