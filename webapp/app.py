@@ -9,6 +9,7 @@ import json
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from kensho_engine.brain import analyze_document_text
+from kensho_engine.utils import load_config
 
 app = Flask(__name__)
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
@@ -43,6 +44,101 @@ def analyze():
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+@app.route('/get_config_status', methods=['GET'])
+def get_config_status():
+    """
+    Returns the configuration status for each service.
+    Checks which services have their required configuration values filled out.
+    """
+    try:
+        # Get the project root directory and config path
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        config_path = os.path.join(project_root, 'config.ini')
+        
+        # Load configuration
+        config = load_config(config_path)
+        if not config:
+            # If config can't be loaded, assume all services are unconfigured
+            return jsonify({
+                'jira': False,
+                'asana': False,
+                'confluence': False,
+                'trello': False,
+                'slack': False,
+                'github': False
+            })
+        
+        status = {}
+        
+        # Check Jira configuration
+        try:
+            jira_section = config['jira']
+            status['jira'] = (
+                bool(jira_section.get('server', '').strip()) and
+                bool(jira_section.get('email', '').strip()) and
+                bool(jira_section.get('api_token', '').strip()) and
+                bool(jira_section.get('project_key', '').strip())
+            )
+        except KeyError:
+            status['jira'] = False
+            
+        # Check Asana configuration
+        try:
+            asana_section = config['asana']
+            status['asana'] = (
+                bool(asana_section.get('personal_access_token', '').strip()) and
+                bool(asana_section.get('workspace_gid', '').strip())
+            )
+        except KeyError:
+            status['asana'] = False
+            
+        # Check Confluence configuration
+        try:
+            confluence_section = config['confluence']
+            status['confluence'] = (
+                bool(confluence_section.get('url', '').strip()) and
+                bool(confluence_section.get('email', '').strip()) and
+                bool(confluence_section.get('api_token', '').strip()) and
+                bool(confluence_section.get('space_key', '').strip())
+            )
+        except KeyError:
+            status['confluence'] = False
+            
+        # Check Trello configuration
+        try:
+            trello_section = config['trello']
+            status['trello'] = (
+                bool(trello_section.get('api_key', '').strip()) and
+                bool(trello_section.get('api_token', '').strip())
+            )
+        except KeyError:
+            status['trello'] = False
+            
+        # Check Slack configuration
+        try:
+            slack_section = config['slack']
+            status['slack'] = (
+                bool(slack_section.get('bot_token', '').strip()) and
+                bool(slack_section.get('channel_id', '').strip())
+            )
+        except KeyError:
+            status['slack'] = False
+            
+        # Check GitHub configuration
+        try:
+            github_section = config['github']
+            status['github'] = (
+                bool(github_section.get('personal_access_token', '').strip()) and
+                bool(github_section.get('repository', '').strip())
+            )
+        except KeyError:
+            status['github'] = False
+        
+        return jsonify(status)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/execute', methods=['POST'])
 def execute():

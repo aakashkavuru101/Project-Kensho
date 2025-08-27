@@ -8,6 +8,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentPlanData = null;
 
+    // Check configuration status on page load
+    checkConfigurationStatus();
+
+    async function checkConfigurationStatus() {
+        try {
+            const response = await fetch('/get_config_status');
+            const configStatus = await response.json();
+            
+            if (response.ok) {
+                updateButtonsBasedOnConfig(configStatus);
+            } else {
+                console.error('Failed to get configuration status:', configStatus.error);
+            }
+        } catch (error) {
+            console.error('Error checking configuration status:', error);
+        }
+    }
+
+    function updateButtonsBasedOnConfig(configStatus) {
+        handsButtons.querySelectorAll('button').forEach(button => {
+            const target = button.dataset.target;
+            const isConfigured = configStatus[target];
+            
+            if (!isConfigured) {
+                button.disabled = true;
+                button.title = `${target.toUpperCase()} is not configured. Check your config.ini file.`;
+                button.classList.add('opacity-50', 'cursor-not-allowed');
+                button.classList.remove('hover:bg-blue-900', 'hover:bg-pink-700', 'hover:bg-blue-600', 'hover:bg-green-700', 'hover:bg-purple-700', 'hover:bg-gray-700');
+            } else {
+                button.disabled = false;
+                button.title = `Send to ${target.toUpperCase()}`;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+    }
+
     uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(uploadForm);
@@ -31,7 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPlanData = result;
             jsonOutput.textContent = JSON.stringify(currentPlanData, null, 2);
             resultsSection.classList.remove('hidden');
-            setButtonsDisabled(false);
+            
+            // Re-check configuration status when new plan is loaded
+            checkConfigurationStatus();
 
         } catch (error) {
             showMessage(`Error: ${error.message}`, 'error');

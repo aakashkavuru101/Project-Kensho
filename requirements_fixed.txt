@@ -5,3 +5,4 @@ atlassian-python-api
 asana
 py-trello
 slack_sdk
+requests
