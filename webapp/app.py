@@ -8,7 +8,7 @@ import json
 # Add the project root to the Python path to allow imports from kensho_engine
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from kensho_engine.brain import analyze_document_text
+from Kensho_engine.brain import analyze_document_text
 
 app = Flask(__name__)
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
@@ -67,7 +67,7 @@ def execute():
         
         # Construct the command to run the hands orchestrator as a module
         command = [
-            sys.executable, '-m', 'kensho_engine.hands',
+            sys.executable, '-m', 'Kensho_engine.hands',
             '--input', json_path,
             '--target', target,
             '--config', os.path.join(project_root, 'config.ini')
