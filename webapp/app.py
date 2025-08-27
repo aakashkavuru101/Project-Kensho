@@ -69,11 +69,11 @@ def allowed_file(filename: str, mimetype: str) -> bool:
 def extract_text_from_file(file, filename: str) -> str:
     """Extract text content from uploaded file based on file type"""
     file_ext = filename.rsplit(".", 1)[1].lower()
-    
+
     try:
         if file_ext == "txt":
             return file.read().decode("utf-8")
-        
+
         elif file_ext == "pdf":
             # Reset file pointer to beginning
             file.seek(0)
@@ -82,7 +82,7 @@ def extract_text_from_file(file, filename: str) -> str:
             for page in pdf_reader.pages:
                 text += page.extract_text() + "\n"
             return text.strip()
-        
+
         elif file_ext == "docx":
             # Reset file pointer to beginning
             file.seek(0)
@@ -91,18 +91,18 @@ def extract_text_from_file(file, filename: str) -> str:
             for paragraph in doc.paragraphs:
                 text += paragraph.text + "\n"
             return text.strip()
-        
+
         elif file_ext == "xlsx":
             # Reset file pointer to beginning
             file.seek(0)
             workbook = openpyxl.load_workbook(file, data_only=True)
             text = ""
-            
+
             # Extract text from all worksheets
             for sheet_name in workbook.sheetnames:
                 sheet = workbook[sheet_name]
                 text += f"\n=== {sheet_name} ===\n"
-                
+
                 for row in sheet.iter_rows(values_only=True):
                     row_text = []
                     for cell in row:
@@ -110,12 +110,12 @@ def extract_text_from_file(file, filename: str) -> str:
                             row_text.append(str(cell))
                     if row_text:  # Only add non-empty rows
                         text += " | ".join(row_text) + "\n"
-            
+
             return text.strip()
-        
+
         else:
             raise ValueError(f"Unsupported file type: {file_ext}")
-            
+
     except Exception as e:
         logger.error(f"Error extracting text from {filename}: {e}")
         raise ValueError(f"Failed to extract text from {filename}: {str(e)}")
