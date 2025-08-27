@@ -4,6 +4,11 @@ Flask
 # NLP Library for the Brain
 spacy
 
+# Document parsing libraries
+PyPDF2
+python-docx
+openpyxl
+
 # Core Atlassian Tools
 jira
 atlassian-python-api

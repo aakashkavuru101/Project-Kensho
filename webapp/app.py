@@ -9,6 +9,11 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict
 
+# Document parsing libraries
+import PyPDF2
+import openpyxl
+from docx import Document
+
 # Add the project root to the Python path to allow imports from kensho_engine
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -31,8 +36,14 @@ task_status: Dict[str, Dict[str, Any]] = {}
 task_lock = threading.Lock()
 
 # Allowed file extensions and MIME types for security
-ALLOWED_EXTENSIONS = {"txt"}
-ALLOWED_MIME_TYPES = {"text/plain"}
+ALLOWED_EXTENSIONS = {"txt", "pdf", "docx", "xlsx"}
+ALLOWED_MIME_TYPES = {
+    "text/plain",
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/msword",  # For older .doc files if uploaded as .docx
+}
 
 
 def allowed_file(filename: str, mimetype: str) -> bool:
@@ -53,6 +64,61 @@ def allowed_file(filename: str, mimetype: str) -> bool:
         return False
 
     return True
+
+
+def extract_text_from_file(file, filename: str) -> str:
+    """Extract text content from uploaded file based on file type"""
+    file_ext = filename.rsplit(".", 1)[1].lower()
+    
+    try:
+        if file_ext == "txt":
+            return file.read().decode("utf-8")
+        
+        elif file_ext == "pdf":
+            # Reset file pointer to beginning
+            file.seek(0)
+            pdf_reader = PyPDF2.PdfReader(file)
+            text = ""
+            for page in pdf_reader.pages:
+                text += page.extract_text() + "\n"
+            return text.strip()
+        
+        elif file_ext == "docx":
+            # Reset file pointer to beginning
+            file.seek(0)
+            doc = Document(file)
+            text = ""
+            for paragraph in doc.paragraphs:
+                text += paragraph.text + "\n"
+            return text.strip()
+        
+        elif file_ext == "xlsx":
+            # Reset file pointer to beginning
+            file.seek(0)
+            workbook = openpyxl.load_workbook(file, data_only=True)
+            text = ""
+            
+            # Extract text from all worksheets
+            for sheet_name in workbook.sheetnames:
+                sheet = workbook[sheet_name]
+                text += f"\n=== {sheet_name} ===\n"
+                
+                for row in sheet.iter_rows(values_only=True):
+                    row_text = []
+                    for cell in row:
+                        if cell is not None:
+                            row_text.append(str(cell))
+                    if row_text:  # Only add non-empty rows
+                        text += " | ".join(row_text) + "\n"
+            
+            return text.strip()
+        
+        else:
+            raise ValueError(f"Unsupported file type: {file_ext}")
+            
+    except Exception as e:
+        logger.error(f"Error extracting text from {filename}: {e}")
+        raise ValueError(f"Failed to extract text from {filename}: {str(e)}")
 
 
 def validate_file_content(content: str) -> bool:
@@ -98,10 +164,11 @@ def analyze():
     # Security validation
     if not allowed_file(file.filename, file.mimetype):
         logger.warning(f"Invalid file type: {file.filename}, MIME: {file.mimetype}")
-        return jsonify({"error": "Only .txt files are allowed"}), 400
+        return jsonify({"error": "Only .txt, .pdf, .docx, and .xlsx files are allowed"}), 400
 
     try:
-        content = file.read().decode("utf-8")
+        # Extract text based on file type
+        content = extract_text_from_file(file, file.filename)
 
         # Validate content
         if not validate_file_content(content):
