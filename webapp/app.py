@@ -268,4 +268,10 @@ def get_task_status(task_id: str):
     return jsonify(status)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    # Production configuration
+    port = int(os.environ.get('PORT', 5001))
+    debug = os.environ.get('FLASK_ENV') != 'production'
+    host = '0.0.0.0' if not debug else '127.0.0.1'
+    
+    logger.info(f"Starting Flask app on {host}:{port} (debug={debug})")
+    app.run(host=host, port=port, debug=debug)
