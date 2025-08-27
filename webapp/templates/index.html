@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Kensho</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900">Project Kensho</h1>
+            <p class="text-lg text-gray-600 mt-2">Intelligent Project Plan Automation</p>
+        </header>
+
+        <!-- Step 1: Upload -->
+        <div id="upload-section" class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Step 1: Analyze a Document</h2>
+            <form id="upload-form" class="space-y-4">
+                <div>
+                    <label for="document" class="block text-sm font-medium text-gray-700">Upload a plain text (.txt) document:</label>
+                    <input type="file" id="document" name="document" accept=".txt" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Analyze Document</button>
+            </form>
+        </div>
+
+        <!-- Loader -->
+        <div id="loader" class="hidden w-16 h-16 border-4 border-gray-200 border-solid rounded-full animate-spin mx-auto my-8"></div>
+
+        <!-- Step 2: Review & Execute -->
+        <div id="results-section" class="hidden bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Step 2: Review Plan & Execute</h2>
+            
+            <div id="hands-buttons" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                <button data-target="jira" class="btn bg-blue-800 hover:bg-blue-900">Send to Jira</button>
+                <button data-target="asana" class="btn bg-pink-600 hover:bg-pink-700">Send to Asana</button>
+                <button data-target="confluence" class="btn bg-blue-500 hover:bg-blue-600">Send to Confluence</button>
+                <button data-target="trello" class="btn bg-green-600 hover:bg-green-700">Send to Trello</button>
+                <button data-target="slack" class="btn bg-purple-600 hover:bg-purple-700">Send to Slack</button>
+            </div>
+
+            <div id="message-area" class="hidden p-4 rounded-md mb-4 text-sm"></div>
+
+            <div>
+                <h3 class="font-semibold mb-2">Analyzed Plan (JSON):</h3>
+                <pre id="json-output" class="bg-gray-900 text-white p-4 rounded-md text-sm overflow-x-auto max-h-96"><code></code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

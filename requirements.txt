@@ -1,0 +1,18 @@
+Web Application Framework
+Flask
+
+NLP Library for the Brain
+spacy
+
+Core Atlassian Tools
+jira
+atlassian-python-api
+
+Asana
+asana
+
+Trello
+py-trello
+
+Slack
+slack_sdk

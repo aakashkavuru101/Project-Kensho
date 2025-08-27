@@ -1,0 +1,15 @@
+Python
+pycache/
+*.pyc
+*.pyo
+*.pyd
+
+Virtual Environment
+venv/
+env/
+.venv/
+
+Application-specific
+webapp/uploads/
+*.sqlite3
+.DS_Store
