@@ -1,15 +1,16 @@
-Python
-pycache/
+# Python
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-Virtual Environment
+# Virtual Environment
 venv/
 env/
 .venv/
 
-Application-specific
+# Application-specific
 webapp/uploads/
+logs/
 *.sqlite3
 .DS_Store

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,20 +11,27 @@
 <body class="bg-gray-100 text-gray-800">
 
     <div class="container mx-auto p-4 md:p-8 max-w-4xl">
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-900">Project Kensho</h1>
-            <p class="text-lg text-gray-600 mt-2">Intelligent Project Plan Automation</p>
+        <header class="text-center mb-8 relative">
+            <!-- Language Toggle -->
+            <div class="absolute top-0 right-0">
+                <button id="lang-toggle" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm">
+                    <span data-en="🇯🇵 日本語" data-jp="🇺🇸 English">🇯🇵 日本語</span>
+                </button>
+            </div>
+            
+            <h1 class="text-4xl font-bold text-gray-900" data-en="Project Kensho" data-jp="プロジェクト賢章">Project Kensho</h1>
+            <p class="text-lg text-gray-600 mt-2" data-en="Intelligent Project Plan Automation" data-jp="インテリジェント プロジェクト プラン オートメーション">Intelligent Project Plan Automation</p>
         </header>
 
         <!-- Step 1: Upload -->
         <div id="upload-section" class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Step 1: Analyze a Document</h2>
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2" data-en="Step 1: Analyze a Document" data-jp="ステップ1: ドキュメントの分析">Step 1: Analyze a Document</h2>
             <form id="upload-form" class="space-y-4">
                 <div>
-                    <label for="document" class="block text-sm font-medium text-gray-700">Upload a plain text (.txt) document:</label>
+                    <label for="document" class="block text-sm font-medium text-gray-700" data-en="Upload a plain text (.txt) document:" data-jp="プレーンテキスト (.txt) ドキュメントをアップロード:">Upload a plain text (.txt) document:</label>
                     <input type="file" id="document" name="document" accept=".txt" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
                 </div>
-                <button type="submit" class="btn btn-primary w-full">Analyze Document</button>
+                <button type="submit" class="btn btn-primary w-full" data-en="Analyze Document" data-jp="ドキュメントを分析">Analyze Document</button>
             </form>
         </div>
 
@@ -33,25 +40,43 @@
 
         <!-- Step 2: Review & Execute -->
         <div id="results-section" class="hidden bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Step 2: Review Plan & Execute</h2>
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2" data-en="Step 2: Review Plan & Execute" data-jp="ステップ2: プランの確認と実行">Step 2: Review Plan & Execute</h2>
             
             <div id="hands-buttons" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                <button data-target="jira" class="btn bg-blue-800 hover:bg-blue-900">Send to Jira</button>
-                <button data-target="asana" class="btn bg-pink-600 hover:bg-pink-700">Send to Asana</button>
-                <button data-target="confluence" class="btn bg-blue-500 hover:bg-blue-600">Send to Confluence</button>
-                <button data-target="trello" class="btn bg-green-600 hover:bg-green-700">Send to Trello</button>
-                <button data-target="slack" class="btn bg-purple-600 hover:bg-purple-700">Send to Slack</button>
+                <button data-target="jira" class="btn bg-blue-800 hover:bg-blue-900" data-en="Send to Jira" data-jp="Jiraに送信">Send to Jira</button>
+                <button data-target="asana" class="btn bg-pink-600 hover:bg-pink-700" data-en="Send to Asana" data-jp="Asanaに送信">Send to Asana</button>
+                <button data-target="confluence" class="btn bg-blue-500 hover:bg-blue-600" data-en="Send to Confluence" data-jp="Confluenceに送信">Send to Confluence</button>
+                <button data-target="trello" class="btn bg-green-600 hover:bg-green-700" data-en="Send to Trello" data-jp="Trelloに送信">Send to Trello</button>
+                <button data-target="slack" class="btn bg-purple-600 hover:bg-purple-700" data-en="Send to Slack" data-jp="Slackに送信">Send to Slack</button>
             </div>
 
             <div id="message-area" class="hidden p-4 rounded-md mb-4 text-sm"></div>
 
             <div>
-                <h3 class="font-semibold mb-2">Analyzed Plan (JSON):</h3>
+                <h3 class="font-semibold mb-2" data-en="Analyzed Plan (JSON):" data-jp="分析されたプラン (JSON):">Analyzed Plan (JSON):</h3>
                 <pre id="json-output" class="bg-gray-900 text-white p-4 rounded-md text-sm overflow-x-auto max-h-96"><code></code></pre>
             </div>
         </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Language toggle functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const langToggle = document.getElementById('lang-toggle');
+            const htmlRoot = document.getElementById('html-root');
+            let currentLang = 'en';
+
+            langToggle.addEventListener('click', () => {
+                currentLang = currentLang === 'en' ? 'jp' : 'en';
+                htmlRoot.setAttribute('lang', currentLang === 'en' ? 'en' : 'ja');
+                
+                // Update all elements with language data attributes
+                document.querySelectorAll('[data-en][data-jp]').forEach(element => {
+                    element.textContent = element.getAttribute(`data-${currentLang}`);
+                });
+            });
+        });
+    </script>
 </body>
 </html>
