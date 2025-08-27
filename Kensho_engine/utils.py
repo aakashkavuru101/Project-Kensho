@@ -2,7 +2,8 @@
 import configparser
 import logging
 
-def load_config(path: str = 'config.ini'):
+
+def load_config(path: str = "config.ini"):
     """
     Loads the configuration file.
     """
