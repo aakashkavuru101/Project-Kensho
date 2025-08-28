@@ -220,15 +220,47 @@ def save_local():
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         base_filename = f"{project_name}_{timestamp}"
 
-        # Save as .docx
+        # Save as .docx with enhanced format
         docx_path = os.path.join(app.config["UPLOAD_FOLDER"], base_filename + ".docx")
         doc = Document()
-        doc.add_heading(plan.get("project_name", "Kensho Project"), 0)
+        doc.add_heading(plan.get("projectName", plan.get("project_name", "Kensho Project")), 0)
+        
+        # Add project metadata if available
+        if plan.get("projectObjective"):
+            doc.add_heading("Project Objective", level=1)
+            doc.add_paragraph(plan["projectObjective"])
+        
+        # Add team information if available
+        if plan.get("team"):
+            doc.add_heading("Project Team", level=1)
+            for member in plan["team"]:
+                doc.add_paragraph(f"• {member.get('memberName', '')}: {member.get('role', '')} ({member.get('level', '')})", style="List Bullet")
+        
+        # Add phases if available
+        if plan.get("phases"):
+            doc.add_heading("Project Phases", level=1)
+            for phase in plan["phases"]:
+                doc.add_heading(f"{phase.get('phaseName', '')}", level=2)
+                doc.add_paragraph(f"Owner: {phase.get('phaseOwner', 'Not Specified')}")
+                doc.add_paragraph(f"Status: {phase.get('phaseStatus', 'Pending')}")
+                if phase.get("subTasks"):
+                    doc.add_paragraph("Sub-tasks:")
+                    for subtask in phase["subTasks"]:
+                        doc.add_paragraph(f"• {subtask.get('taskName', '')}", style="List Bullet")
+        
+        # Add requirements if available
+        if plan.get("requirements"):
+            doc.add_heading("Requirements", level=1)
+            for req in plan["requirements"]:
+                doc.add_paragraph(f"{req.get('reqId', '')}: {req.get('description', '')}", style="List Bullet")
+        
+        # Add thematic groups (for backward compatibility)
+        doc.add_heading("Detailed Analysis", level=1)
         doc.add_paragraph(plan.get("kensho_mission", ""))
         doc.add_paragraph(f"Generated at: {plan.get('generated_at', '')}")
         doc.add_paragraph("")
         for group in plan.get("thematic_groups", []):
-            doc.add_heading(group.get("group_name", "Unnamed Group"), level=1)
+            doc.add_heading(group.get("group_name", "Unnamed Group"), level=2)
             if group.get("group_description"):
                 doc.add_paragraph(group["group_description"])
             for task in group.get("tasks", []):
@@ -239,23 +271,28 @@ def save_local():
                     doc.add_paragraph(f"  Details: {task['details']}", style="Intense Quote")
         doc.save(docx_path)
 
-        # Save as .txt
+        # Save as .txt with enhanced professional format
         txt_path = os.path.join(app.config["UPLOAD_FOLDER"], base_filename + ".txt")
         with open(txt_path, "w", encoding="utf-8") as f:
-            f.write(plan.get("project_name", "Kensho Project") + "\n")
-            f.write(plan.get("kensho_mission", "") + "\n")
-            f.write(f"Generated at: {plan.get('generated_at', '')}\n\n")
-            for group in plan.get("thematic_groups", []):
-                f.write(f"# {group.get('group_name', 'Unnamed Group')}\n")
-                if group.get("group_description"):
-                    f.write(group["group_description"] + "\n")
-                for task in group.get("tasks", []):
-                    f.write(f"- {task.get('task_name', '')}\n")
-                    if task.get("owner"):
-                        f.write(f"  Owner: {task['owner']}\n")
-                    if task.get("details"):
-                        f.write(f"  Details: {task['details']}\n")
-                f.write("\n")
+            # Use professional analysis if available, otherwise fall back to basic format
+            if plan.get("professional_analysis"):
+                f.write(plan["professional_analysis"])
+            else:
+                # Fallback to basic format
+                f.write(plan.get("projectName", plan.get("project_name", "Kensho Project")) + "\n")
+                f.write(plan.get("kensho_mission", "") + "\n")
+                f.write(f"Generated at: {plan.get('generated_at', '')}\n\n")
+                for group in plan.get("thematic_groups", []):
+                    f.write(f"# {group.get('group_name', 'Unnamed Group')}\n")
+                    if group.get("group_description"):
+                        f.write(group["group_description"] + "\n")
+                    for task in group.get("tasks", []):
+                        f.write(f"- {task.get('task_name', '')}\n")
+                        if task.get("owner"):
+                            f.write(f"  Owner: {task['owner']}\n")
+                        if task.get("details"):
+                            f.write(f"  Details: {task['details']}\n")
+                    f.write("\n")
 
         # Default to docx for download
         download_url = f"/download/{os.path.basename(docx_path)}"
