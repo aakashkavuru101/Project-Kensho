@@ -46,10 +46,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     handsButtons.addEventListener('click', async (e) => {
         if (e.target.tagName !== 'BUTTON') return;
-        
         const target = e.target.dataset.target;
         if (!currentPlanData || !target) {
             alert('No plan data available to execute.');
+            return;
+        }
+
+        // Local save as Word/Text
+        if (target === 'local') {
+            loader.classList.remove('hidden');
+            messageArea.classList.add('hidden');
+            setButtonsDisabled(true);
+            try {
+                const response = await fetch('/save_local', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan: currentPlanData }),
+                });
+                if (!response.ok) {
+                    const result = await response.json();
+                    throw new Error(result.error || 'Failed to save file');
+                }
+                const result = await response.json();
+                if (result.download_url) {
+                    window.open(result.download_url, '_blank');
+                    showMessage('File generated! Download should start automatically.', 'success');
+                } else {
+                    showMessage('File generated, but download URL missing.', 'info');
+                }
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            } finally {
+                loader.classList.add('hidden');
+                setButtonsDisabled(false);
+            }
             return;
         }
 

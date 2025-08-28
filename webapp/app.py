@@ -1,3 +1,13 @@
+from flask import send_from_directory
+def enrich_plan_data(plan_data: dict) -> dict:
+    """Add mission summary and ensure all relevant fields are present in the output JSON."""
+    plan_data = dict(plan_data)  # shallow copy
+    plan_data["kensho_mission"] = (
+        "Kensho bridges the gap between unstructured documents and structured project plans, automating days of manual work into minutes. "
+        "Upload any project brief, and Kensho will analyze, parse, and deliver a structured plan—saving you time and effort."
+    )
+    plan_data["generated_at"] = datetime.now().isoformat()
+    return plan_data
 # webapp/app.py
 import json
 import logging
@@ -181,10 +191,10 @@ def analyze():
 
         # Call the real Brain logic with enhanced error handling
         plan_data = analyze_document_text(content, project_title)
+        plan_data = enrich_plan_data(plan_data)
 
         logger.info("Document analysis completed successfully")
         return jsonify(plan_data)
-
     except UnicodeDecodeError:
         logger.error("File encoding error")
         return jsonify({"error": "File must be UTF-8 encoded text"}), 400
@@ -194,6 +204,71 @@ def analyze():
     except Exception as e:
         logger.error(f"Analysis error: {e}")
         return jsonify({"error": f"Analysis failed: {str(e)}"}), 500
+
+# --- Save as Word/Text endpoint ---
+@app.route("/save_local", methods=["POST"])
+def save_local():
+    """Save the analyzed plan as a Word (.docx) or text file and provide a download link."""
+    try:
+        data = request.json
+        plan = data.get("plan")
+        if not plan:
+            return jsonify({"error": "No plan data provided"}), 400
+
+        plan = enrich_plan_data(plan)
+        project_name = plan.get("project_name", "Kensho_Plan").replace(" ", "_")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        base_filename = f"{project_name}_{timestamp}"
+
+        # Save as .docx
+        docx_path = os.path.join(app.config["UPLOAD_FOLDER"], base_filename + ".docx")
+        doc = Document()
+        doc.add_heading(plan.get("project_name", "Kensho Project"), 0)
+        doc.add_paragraph(plan.get("kensho_mission", ""))
+        doc.add_paragraph(f"Generated at: {plan.get('generated_at', '')}")
+        doc.add_paragraph("")
+        for group in plan.get("thematic_groups", []):
+            doc.add_heading(group.get("group_name", "Unnamed Group"), level=1)
+            if group.get("group_description"):
+                doc.add_paragraph(group["group_description"])
+            for task in group.get("tasks", []):
+                doc.add_paragraph(f"- {task.get('task_name', '')}", style="List Bullet")
+                if task.get("owner"):
+                    doc.add_paragraph(f"  Owner: {task['owner']}", style="Intense Quote")
+                if task.get("details"):
+                    doc.add_paragraph(f"  Details: {task['details']}", style="Intense Quote")
+        doc.save(docx_path)
+
+        # Save as .txt
+        txt_path = os.path.join(app.config["UPLOAD_FOLDER"], base_filename + ".txt")
+        with open(txt_path, "w", encoding="utf-8") as f:
+            f.write(plan.get("project_name", "Kensho Project") + "\n")
+            f.write(plan.get("kensho_mission", "") + "\n")
+            f.write(f"Generated at: {plan.get('generated_at', '')}\n\n")
+            for group in plan.get("thematic_groups", []):
+                f.write(f"# {group.get('group_name', 'Unnamed Group')}\n")
+                if group.get("group_description"):
+                    f.write(group["group_description"] + "\n")
+                for task in group.get("tasks", []):
+                    f.write(f"- {task.get('task_name', '')}\n")
+                    if task.get("owner"):
+                        f.write(f"  Owner: {task['owner']}\n")
+                    if task.get("details"):
+                        f.write(f"  Details: {task['details']}\n")
+                f.write("\n")
+
+        # Default to docx for download
+        download_url = f"/download/{os.path.basename(docx_path)}"
+        return jsonify({"download_url": download_url})
+    except Exception as e:
+        logger.error(f"Error saving local file: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# --- Serve generated files ---
+@app.route("/download/<filename>")
+def download_file(filename):
+    """Serve a file from the uploads folder."""
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename, as_attachment=True)
 
 
 def execute_hands_async(task_id: str, plan_data: Dict[str, Any], target: str, json_path: str):
